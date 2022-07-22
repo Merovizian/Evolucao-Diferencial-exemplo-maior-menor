@@ -1,2 +1,3 @@
 # Evolucao-Diferencial-exemplo-maior-menor
-Aplicação de otimizador evolutivo diferencial para determinar soma de características em um vetor
+Este programa utiliza a mesma forma de otimização do caixeiro viajante, porem com a finalidade de se ter a maior ou
+menor soma de caracteristicas de cada geração. 
