@@ -3,37 +3,22 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-# PROGRAMA QUE CRIA A MATRIZ DE DISTANCIA ENTRE AS CIDADES:
-def escalaCidades(ordem, menor=1, maior=9):
+def povoar(qnt_individuos, qnt_caracteristicas, menor_caracteristica=0, maior_caracteristica=9):
     '''
-    FUNCAO QUE CRIA UMA MATRIZ DE DISTANCIA ENTRE AS CIDASDES
-    :param ordem: tamanho da matriz, ou seja, quantidade de cidade
-    :param menor: menor distancia entre as cidades
-    :param maior: maior distancia entre as cidades
-    :return: retorna a matriz contendo as cidades e a distancia entre elas
-    '''
+    Inicia a população de individuos, conforme as caracteristicas passadas.
+    :param qnt_individuos: é a quantidade de individuos que a população irá gerar.
+    :param qnt_caracteristicas: é a caracteristica de cada um dos individuos.
+    :param menor_caracteristica: é o valor mínimo que cada indivíduo poderá ter como caracteristica.
+    :param maior_caracteristica: é o valor máximo que cada indivíduo poderá ter como caracteristica.
 
-    escala = np.zeros((ordem, ordem))
-    for a in range(ordem):
-        for b in range(ordem):
-            if a != b:
-                escala[a][b] = random.randint(menor, maior)
-    return escala
-
-
-def populacao(tamanhoPopulacao, viagens):
-    '''
-    Inicia a população de individuos, de acordo com a quantidade de cidades existente.
-    :param tamanhoPopulacao: é a quantidade de individuos que existem nessa pupulação
-    :param viagens: é a caracteristica de cada um dos individuos, ou seja por quais cidades eles vão percorrer
-    :return:
+    :return: populacao: é uma matriz de individuos contendo os individuos e suas caracteristicas.
     '''
 
-    populacao = np.random.randint(10, size=(tamanhoPopulacao, viagens))
+    populacao = np.random.randint(menor_caracteristica, maior_caracteristica+1,  size=(qnt_individuos, qnt_caracteristicas))
     return populacao
 
 
-def fitDistancia(matrizElementos, matrizCidades = 4):
+def fitDistancia(matrizElementos, matrizCidades=4):
     '''
    Função que faz o calculo da distancia percorrida por cada um dos elementos
    :param matrizCidades: No momento, não é util essa função
@@ -58,7 +43,7 @@ def cruzamento(matrizElementos, cruzamentoTaxa):
     :return: retorna uma matriz com novos elementos cruzados
     '''
     matrizGeracaoNova = matrizElementos.copy()
-    #matrizGeracaoNova = np.zeros((len(matrizElementos), len(matrizElementos[1])))
+    # matrizGeracaoNova = np.zeros((len(matrizElementos), len(matrizElementos[1])))
     for elementos in range(len(matrizElementos)):
         for caracteristica in range(len(matrizElementos[elementos])):
             if caracteristica < cruzamentoTaxa * len(matrizElementos[elementos]):
@@ -95,6 +80,7 @@ def mutacao(matrizElementos, mutacaoTaxa):
                 matrizGeracaoNova[elementos][PosicaoCaracteristicaRandom] = ValorCaracteristicaRandom
     return matrizGeracaoNova
 
+
 def aplicacao(geracoes, matrizElementos):
     '''
     É o programa principal, que faz a passagem das gerações
@@ -109,7 +95,7 @@ def aplicacao(geracoes, matrizElementos):
             print(fitDistancia(novosElementos))
             print(f"Geração: {linhagem}")
             matrizFit.append(int(sum(fitDistancia(novosElementos))))
-            novosElementos = cruzamento(novosElementos,cruzamentoTaxa)
+            novosElementos = cruzamento(novosElementos, cruzamentoTaxa)
             novosElementos = mutacao(novosElementos, mutacaoTaxa)
             if fitDistancia(novosElementos) > fitDistancia(matrizElementos):
                 matrizElementos = novosElementos.copy()
@@ -120,14 +106,19 @@ def aplicacao(geracoes, matrizElementos):
 
     return matrizElementos, matrizFit
 
-# Parametros iniciais
-pessoas = 5  # População
+
+teste = np.random.randint(0,99,  size=(1, 15))
+resposta = sum(teste[0])
+
+print(resposta)
+'''# Parametros iniciais
+pessoas = 2  # População
 viagens = 5  # Caracteristicas
 geracoes = 5000000
 
 # Parametors para criação de novos individuos
-cruzamentoTaxa = 0.3
-mutacaoTaxa = 0.2
+cruzamentoTaxa = 0.25
+mutacaoTaxa = 0.15
 
 matrizElementos = populacao(pessoas, viagens)
 
@@ -145,3 +136,4 @@ plt.xlabel("GERAÇÕES")
 plt.ylabel("SOMA DAS DISTANCIAS")
 plt.show()
 
+'''
