@@ -18,8 +18,12 @@ def povoar(qnt_individuos, qnt_caracteristicas, menor_caracteristica=0, maior_ca
 
     # caso o usuario opite por NÃO repetir os valores
     if repeticao == 0:
-        for elemento in range(qnt_individuos):
-            populacao.append(random.sample(range(menor_caracteristica, maior_caracteristica), qnt_caracteristicas))
+        try:
+            for elemento in range(qnt_individuos):
+                populacao.append(random.sample(range(menor_caracteristica, maior_caracteristica), qnt_caracteristicas))
+        except ValueError:
+            print("Impossível gerar essa população. A quantidade de caracteristicas supera o maior valor delas,"
+                  "tente aumentar o valor maximo das caracteristicas ou diminuir a quantidade de caracteristicas")
     # caso o usuario opite por repetir os valores
     if repeticao == 1:
         populacao = np.random.randint(menor_caracteristica, maior_caracteristica + 1, size=(qnt_individuos,
@@ -96,84 +100,129 @@ def cruzamento(matrizElemento, cruzamentoTaxa, repeticao=1):
     return matrizGeracaoNova
 
 
-def mutacao(matrizElementos, mutacaoTaxa):
-    '''
-    Função que faz a "mutação" de caracteristicas de cada individuo, a quantidade de caracteristicas é definido pela taxa
-    :param matrizElementos: Matriz que possui a população
-    :param mutacaoTaxa: é a taxa de caracteristicas que serão mutacionadas
-    :return: uma nova matriz com a nova geração
-    '''
-    valorMaximo = (max([valor for linha in matrizElementos for valor in linha]))
-    qntRandom = round(len(matrizElementos[1]) * mutacaoTaxa)
+def mutacao(matrizElementos, mutacaoTaxa, repeticao=1):
+    """
+    Função que faz a "mutação" de caracteristicas de cada indivíduo, ou seja, pega uma ou mais caractetistica desse
+    indivíduo e transforma em outro valor aleatoriamente a quantidade de caracteristicas é definido pela taxa.
+    :param matrizElementos: Matriz que possui a população.
+    :param mutacaoTaxa: é a taxa de caracteristicas que serão mutacionadas.
+    :param repeticao: opção para o usuario decidir se as caracteristicas se repetem ou não, 1 — repete. 0 — não repete.
+    :return: uma nova matriz com a nova geração.
+    """
+
     matrizGeracaoNova = matrizElementos.copy()
     aux = 1
     contador = 0
-    for elementos in range(len(matrizElementos)):
-        for caracteristica in range(len(matrizElementos[elementos])):
-            if caracteristica < qntRandom:
-                ValorCaracteristicaRandom = random.randint(0, 9)
-                PosicaoCaracteristicaRandom = random.randint(0, len(matrizElementos[1]) - 1)
-                matrizGeracaoNova[elementos][PosicaoCaracteristicaRandom] = ValorCaracteristicaRandom
+
+    # Variavel que armazena a quantidades de caracteristicas que serão modificadas com a mutação. Conforme a taxa.
+    qntRandom = round(len(matrizElementos[1]) * mutacaoTaxa)
+    # Determinação dos valores maximos e minimos das caracteristicas que serão geradas aleatorimamente
+    valorMaximo = (max([valor for linha in matrizElementos for valor in linha]))
+    valorMinimo = (min([valor for linha in matrizElementos for valor in linha]))
+
+    # variavel que armazena as posições das caracteristicas que irão sofrer a mutação
+    posRandom = random.sample(range(0, len(matrizElementos[1])), qntRandom)
+
+    # Copia-se a matriz de individuos para uma nova matriz.
+    matrizGeracaoNova = matrizElementos.copy()
+    contador = 0
+
+    # ‘Loop’ que percorre cada indivíduo da população
+    for elemento in matrizGeracaoNova:
+        aux = 1
+
+        # 'Loop' que percorre cada posição das caracteristica de cada indivíduo
+        for contCaracteristica in range(len(elemento)):
+
+            # Se a posição da caracteristica estiver nas posições randomicas há a mutação naquela posição
+            if int(contCaracteristica) in posRandom:
+                # É gerado então um valor aleatório para substituir uma caracteristica (Mutação)
+                ValorCaracteristicaRandom = random.randint(valorMinimo, valorMaximo)
+                # Faz a checagem para não repetir
+                if repeticao == 0:
+                    while not (ValorCaracteristicaRandom not in elemento):
+                        contador += 1
+                        # Como o valor aleatorio coincidiu com um já existente, repete-se o 'random'
+                        ValorCaracteristicaRandom = random.randint(valorMinimo, valorMaximo)
+                        # Faz a tentativa 50 vezes.
+                        if contador >= 50:
+                            aux = 0
+                            contador = 0
+                            break
+                    if aux == 1:
+                        elemento[contCaracteristica] = ValorCaracteristicaRandom
+                else:
+                    elemento[contCaracteristica] = random.randint(valorMinimo, valorMaximo)
+
     return matrizGeracaoNova
 
 
-def aplicacao(geracoes, matrizElementos):
-    '''
-    É o programa principal, que faz a passagem das gerações
-    :param geracoes:
-    :param matrizElementos:
-    :return:
-    '''
+def aplicacao(geracoes, cruzamentoTaxa, mutacaoTaxa, matrizElementos, repeticao=1, comparacao='maior'):
+    """
+    É o programa principal, que faz a passagem das gerações.
+    :param mutacaoTaxa: é a taxa de caracteristicas que serão mutacionadas.
+    :param cruzamentoTaxa: é a porcentagem de caracteristicas que serão cruzadas.
+    :param geracoes: quantidades de filhos que o sistema terá.
+    :param matrizElementos: é a matriz que tem os individuos.
+    :param repeticao: opção para o usuario decidir se as caracteristicas se repetem ou não, 1 — repete. 0 — não repete.
+    :param comparacao: verifica se o usuario quer o maior fit ou menor fit entre as gerações.
+    :return: retorna uma nova matriz com os individuos otimizados e também a matriz de distância.
+    """
     matrizFit = list()
     try:
         for linhagem in range(geracoes):
             novosElementos = matrizElementos.copy()
             print(fitDistancia(novosElementos))
             print(f"Geração: {linhagem}")
-            matrizFit.append(int(sum(fitDistancia(novosElementos))))
-            novosElementos = cruzamento(novosElementos, cruzamentoTaxa)
-            novosElementos = mutacao(novosElementos, mutacaoTaxa)
-            if fitDistancia(novosElementos) > fitDistancia(matrizElementos):
-                matrizElementos = novosElementos.copy()
+            matrizFit.append((fitDistancia(novosElementos)))
+            #novosElementos = cruzamento(novosElementos, cruzamentoTaxa, repeticao)
+            novosElementos = mutacao(novosElementos, mutacaoTaxa, repeticao)
+            if comparacao.lower() == "maior":
+                if fitDistancia(novosElementos) > fitDistancia(matrizElementos):
+                    matrizElementos = novosElementos.copy()
+                else:
+                    matrizElementos = matrizElementos.copy()
             else:
-                matrizElementos = matrizElementos.copy()
-    except:
+                if fitDistancia(novosElementos) < fitDistancia(matrizElementos):
+                    matrizElementos = novosElementos.copy()
+                else:
+                    matrizElementos = matrizElementos.copy()
+    except KeyboardInterrupt:
 
         return matrizElementos, matrizFit
 
     return matrizElementos, matrizFit
 
 
-povoacao = povoar(5, 6, 0, 10, 1)
-print(povoacao)
-print(fitDistancia(povoacao))
-povoacao = cruzamento(povoacao, 0.5,0)
-print(povoacao)
-print(fitDistancia(povoacao))
+# EXEMPLO:
+# Parametros iniciais
+qntPessoas = 10 # População
+qntCaracteristicas = 5 # Caracteristicas
+menorCaracteristica = 0  # Menor Valor Caracteristicas
+maiorCaracteristica = 10  # Maior Valor Caracteristica
+repetir = 0  # 1 — repete. 0 — não repete. as caracteristicas
+comparacao = "menor"  # A comparação será por maior ou menor fit entre as geraçoes?
 
-'''# Parametros iniciais
-pessoas = 2  # População
-viagens = 5  # Caracteristicas
-geracoes = 5000000
+# Filhos, gerações
+geracoes = 50000
 
 # Parametors para criação de novos individuos
-cruzamentoTaxa = 0.25
-mutacaoTaxa = 0.15
+cruzamentoTaxa = 0.26
+mutacaoTaxa = 0.16
 
-matrizElementos = populacao(pessoas, viagens)
-
-
+matrizElementos = povoar(qntPessoas, qntCaracteristicas, menorCaracteristica, maiorCaracteristica, repetir)
 
 
-resultado, matrizfit = aplicacao(geracoes, matrizElementos)
+resultado, matrizfit = aplicacao(geracoes, cruzamentoTaxa, mutacaoTaxa, matrizElementos, repetir, comparacao)
+print("PRIMEIRA POPULACAO")
 print(matrizElementos)
+
+print("ULTIMA POPULACAO")
 print(resultado)
 
-plt.plot( matrizfit )
-plt.title("Caixeiro Viajante por Evolucao Diferencial")
+plt.plot(matrizfit)
+plt.title(f"OTIMIZAÇÃO PARA A {comparacao.upper()} POPULAÇÂO")
 plt.grid(True)
 plt.xlabel("GERAÇÕES")
-plt.ylabel("SOMA DAS DISTANCIAS")
+plt.ylabel("SOMA DAS CARACTERISTICAS")
 plt.show()
-
-'''
