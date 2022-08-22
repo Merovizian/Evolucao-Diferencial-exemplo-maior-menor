@@ -31,7 +31,7 @@ def povoar(qnt_individuos, qnt_caracteristicas, menor_caracteristica=0, maior_ca
     return populacao
 
 
-def fitDistancia(matrizElementos):
+def fitSoma(matrizElementos):
     """
    Função que faz o cálculo da distância percorrida por cada um dos elementos.
    :param matrizElementos: é a matriz onde estão elencados os elementos(individuos, população)
@@ -43,7 +43,7 @@ def fitDistancia(matrizElementos):
     # for para colocar na lista vazia a caracteristica de todos os individuos
     for elemento in range(len(matrizElementos)):
         for caracteristica in range(len(matrizElementos[elemento])):
-            matrizResultadoSoma.append(matrizElementos[elemento][caracteristica])
+            matrizResultadoSoma.append(matrizElementos[elemento][caracteristica]*(caracteristica+1))
     # retorna o valor da soma de todos as caracteristicas dessa população
     return sum(matrizResultadoSoma)
 
@@ -62,11 +62,70 @@ def cruzamento(matrizElemento, cruzamentoTaxa, repeticao=1):
     # gera um array de zeros
     matrizGeracaoNova = np.zeros((len(matrizElemento), (len(matrizElemento[0]))))
 
-    # for para a criação da nova matriz de cruzamento
+    qntRandom = round(len(matrizElemento[1]) * cruzamentoTaxa)
+
+    posRandom = random.sample(range(0, len(matrizElemento[1])), qntRandom)
+
+    print("Posrandom",posRandom)
+
+    # Copia-se a matriz de individuos para uma nova matriz.
+
+    # ‘Loop’ que percorre cada indivíduo da população
+    for elemento in range(len(matrizGeracaoNova)):
+        # 'Loop' que percorre cada posição das caracteristica de cada indivíduo
+        for contCaracteristica in range(len(matrizGeracaoNova[elemento])):
+            # Se a posição da caracteristica estiver nas posições randomicas há a mutação naquela posição
+            if int(contCaracteristica) in posRandom:
+                try:
+                    # caso o usuario decida que não haverá repetição
+                    if repeticao == 0:
+                        # programa verifica se há numeros repetidos entre os individuos
+                        print(matrizGeracaoNova[elemento])
+                        if int(matrizElemento[elemento + 1][contCaracteristica]) not in (matrizGeracaoNova[elemento]):
+                            # se não existe numero repetido, faz o cruzamento, entre individuos
+                            matrizGeracaoNova[elemento][contCaracteristica] = \
+                                matrizElemento[elemento + 1][contCaracteristica]
+                        # se existe numero repetido, não há cruzamento, apenas se iguala as caracteristicas
+                        else:
+                            matrizGeracaoNova[elemento][contCaracteristica] = \
+                                matrizElemento[elemento][contCaracteristica]
+                    # caso o usuario decida que haverá repetição. Há cruzamento.
+                    else:
+                        matrizGeracaoNova[elemento][contCaracteristica] = \
+                            matrizElemento[elemento + 1][contCaracteristica]
+                    # exceção para evitar que o programa pare, pois, o cruzamento é sempre com um indivíduo + 1, e isso
+                    # causa erro quando chegar no último individuo.
+                except IndexError:
+                    # mesma logica acima, porém ao invés de ir para o individui + 1, o último individuo faz cruzamento
+                    # com o indivíduo 0.
+                    print(elemento)
+                    if repeticao == 0:
+                        if int(matrizElemento[0][contCaracteristica]) not in matrizGeracaoNova[elemento]:
+                            print("Matriz elemento", matrizElemento[0])
+                            print("MatrizGeracaoNova",matrizGeracaoNova[elemento])
+                            matrizGeracaoNova[elemento][contCaracteristica] = matrizElemento[0][contCaracteristica]
+                        else:
+                            print("Matriz elemento", matrizElemento[0])
+                            print("MatrizGeracaoNova",matrizGeracaoNova[elemento])
+                            matrizGeracaoNova[elemento][contCaracteristica] =\
+                                matrizElemento[elemento][contCaracteristica]
+                    else:
+                        print("Matriz elemento", matrizElemento[0])
+                        print("MatrizGeracaoNova", matrizGeracaoNova[elemento])
+                        matrizGeracaoNova[elemento][contCaracteristica] = matrizElemento[0][contCaracteristica]
+
+    return matrizGeracaoNova
+
+
+
+
+
+
+'''    # for para a criação da nova matriz de cruzamento
     for elementos in range(len(matrizElemento)):
         for caracteristica in range(len(matrizElemento[elementos])):
             # condição para selecionar quais caracteristicas serão cruzadas, conforme a taxa
-            if caracteristica < cruzamentoTaxa * len(matrizElemento[elementos]):
+            if caracteristica >= cruzamentoTaxa * len(matrizElemento[elementos]):
                 # as primeiras caracteristicas até a taxa não mudam. Então iguala-se as caracteristicas
                 matrizGeracaoNova[elementos][caracteristica] = matrizElemento[elementos][caracteristica]
             else:
@@ -97,7 +156,7 @@ def cruzamento(matrizElemento, cruzamentoTaxa, repeticao=1):
                     else:
                         matrizGeracaoNova[elementos][caracteristica] = matrizElemento[0][caracteristica]
 
-    return matrizGeracaoNova
+    return matrizGeracaoNova'''
 
 
 def mutacao(matrizElementos, mutacaoTaxa, repeticao=1):
@@ -172,18 +231,18 @@ def aplicacao(geracoes, cruzamentoTaxa, mutacaoTaxa, matrizElementos, repeticao=
     try:
         for linhagem in range(geracoes):
             novosElementos = matrizElementos.copy()
-            print(fitDistancia(novosElementos))
+            print(fitSoma(novosElementos))
             print(f"Geração: {linhagem}")
-            matrizFit.append((fitDistancia(novosElementos)))
+            matrizFit.append((fitSoma(novosElementos)))
             #novosElementos = cruzamento(novosElementos, cruzamentoTaxa, repeticao)
             novosElementos = mutacao(novosElementos, mutacaoTaxa, repeticao)
             if comparacao.lower() == "maior":
-                if fitDistancia(novosElementos) > fitDistancia(matrizElementos):
+                if fitSoma(novosElementos) > fitSoma(matrizElementos):
                     matrizElementos = novosElementos.copy()
                 else:
                     matrizElementos = matrizElementos.copy()
             else:
-                if fitDistancia(novosElementos) < fitDistancia(matrizElementos):
+                if fitSoma(novosElementos) < fitSoma(matrizElementos):
                     matrizElementos = novosElementos.copy()
                 else:
                     matrizElementos = matrizElementos.copy()
@@ -207,10 +266,20 @@ comparacao = "menor"  # A comparação será por maior ou menor fit entre as ger
 geracoes = 50000
 
 # Parametors para criação de novos individuos
-cruzamentoTaxa = 0.26
+cruzamentoTaxa = 0.5
 mutacaoTaxa = 0.16
 
-matrizElementos = povoar(qntPessoas, qntCaracteristicas, menorCaracteristica, maiorCaracteristica, repetir)
+matrizElementos = povoar(3, 4, 0, 10, 0)
+print(matrizElementos)
+resultado = fitSoma(matrizElementos)
+print(resultado)
+matrizElementos = cruzamento(matrizElementos,cruzamentoTaxa,1)
+print(matrizElementos)
+resultado = fitSoma(matrizElementos)
+print(resultado)
+
+
+'''matrizElementos = povoar(qntPessoas, qntCaracteristicas, menorCaracteristica, maiorCaracteristica, repetir)
 
 
 resultado, matrizfit = aplicacao(geracoes, cruzamentoTaxa, mutacaoTaxa, matrizElementos, repetir, comparacao)
@@ -226,3 +295,4 @@ plt.grid(True)
 plt.xlabel("GERAÇÕES")
 plt.ylabel("SOMA DAS CARACTERISTICAS")
 plt.show()
+'''
